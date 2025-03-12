@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Notebooks
+splitter.ipynb
+tests.ipynb
+*.ipynb
+
+# Other
+app2.py 
+ui_test.py
+
+# Pytorch
+# *.pth
+
+# Secrets
+*.toml
