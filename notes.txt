@@ -1,0 +1,22 @@
+1. Database
+2. 3D Model
+3. Class wise predictions
+4. PDF upload section
+
+
+DONE 5. Change timestamps to EST
+HALF DONE 6. Add pixel plot importance map (pending overlay, plots only present for 1A and 1G)
+          6. Plots added for all subjects (average of few scans for each subject), but not overlayed due to low visibility
+DONE 8. Change welcome name to Tushar Mehta
+DONE 9. Shap plot on Diag, csv data on clinical tab
+DONE 10. Notes go in clinical tab
+DONE 15. Change talk to AI to virtual doctors
+
+DONE 7. Include doctor's notes in LLM chat context
+DONE 11. Add patients notes in csv
+DONE 12. Make classification outcome more natural language like + show probablities
+
+--
+March 12
+13. Dynamic LLM sentiment
+DONE 14. Add metadata tab for ethnicity/race etc

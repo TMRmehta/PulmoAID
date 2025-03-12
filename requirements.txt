@@ -1,0 +1,17 @@
+# Python >= 3.12.4
+torch
+torchvision
+google-generativeai
+pydicom
+pandas
+streamlit>=1.42.2
+numpy
+matplotlib
+seaborn
+joblib
+pillow
+scikit-learn
+shap
+xgboost
+pymongo
+pytz
