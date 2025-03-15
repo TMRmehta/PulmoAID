@@ -994,8 +994,8 @@ if __name__ == "__main__":
 	st.session_state.db = utilloader('database')
 	st.session_state.subject_list = list(csvdata['Subject'])
 	
-	st.session_state.login = True
-	st.session_state.user = 'Doctor'
+	#st.session_state.login = True
+	#st.session_state.user = 'Doctor'
 	# patient_page('100158')
 	
 	main()
