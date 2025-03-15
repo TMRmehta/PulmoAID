@@ -7,7 +7,7 @@ import streamlit as st
 from PIL import Image
 from database import DBManager
 from manager import DataManager, LungCancerVGG16Fusion
-from gemini import LLM
+from gemini import LLM, ScoreGen
 import os
 import shap
 import numpy as np
@@ -41,6 +41,7 @@ smoking_hist = ['age_quit', 'cigar', 'cigsmok', 'pipe', 'pkyr', 'smokeage', 'smo
 llm_sent = ['llm_sentiment']
 clinical = ['biop0', 'bioplc', 'proclc', 'can_scr', 'canc_free_days']
 treatments = ['procedures', 'treament_categories', 'treatment_types', 'treatment_days']
+score_cols = ['age', 'gender', 'height', 'weight', 'age_quit', 'cigar', 'cigsmok', 'pipe', 'pkyr', 'smokeage', 'smokeday', 'smokelive', 'smokework', 'smokeyr']
 
 
 if 'layout' not in st.session_state: st.session_state.layout = 'centered'
@@ -202,6 +203,10 @@ def utilloader(utility:str):
 	
 	if utility == 'patient_notes':
 		return pd.read_csv(os.path.join('data', 'patient_notes.csv'))
+	
+	if utility == 'score_gen':
+		return ScoreGen()
+
 
 @st.cache_resource
 def load_classifier(name:str):
@@ -239,44 +244,14 @@ def generate_outcome(features=[], subject='', classifier='', full_row=None) -> s
     return result
 
 
-# @st.cache_resource
-def generate_shap_plot(base: pd.DataFrame, subject: str):
-	# np.random.seed(0)
-	# model = load_classifier('XGBoost')
-
-	# features = ['n1', 'n2', 'n3', 'n4',
-	# 			'age', 'ethnic', 'gender', 'height', 'race', 'weight',
-	# 			'age_quit', 'cigar', 'cigsmok', 'pipe', 'pkyr', 'smokeage', 'smokeday',
-	# 			'smokelive', 'smokework', 'smokeyr']
-	# X = base[features]
-	# y = base['lung_cancer']
-
-	# # Fit model before SHAP calculation
-	# model.fit(X, y)
-	
-	# subject_index = base[base['Subject'] == int(subject)].index
-	# explainer = shap.TreeExplainer(model)
-	# shap_values = explainer.shap_values(X)
-	# subject_shap_values = shap_values[subject_index]
-
-	# plt.figure(figsize=(12, 8))
-	# shap.summary_plot(shap_values, X, max_display=20, show=False)
-
-	# # Get feature importance order
-	# mean_abs_shap = np.abs(shap_values).mean(axis=0)
-	# feature_importance_order = np.argsort(-mean_abs_shap)[:20]
-	
-	# # Plot subject points
-	# for i, idx in enumerate(feature_importance_order):
-	# 	plt.scatter(subject_shap_values[0][idx], i, color='black', edgecolor='white', s=50, zorder=3)
-
-	# plt.title("SHAP Summary Plot with Subject Highlighted")
-	# plt.tight_layout()
-	
-	# return plt
-
+def generate_shap_plot(subject: str):
 	shap_path = os.path.join('shap_plots', f'{subject}.png')
-	image = Image.open(shap_path)
+	
+	if os.path.exists(shap_path):
+		image = Image.open(shap_path)
+
+	else:
+		image =  Image.open(os.path.join('images', 'notfound.jpg'))
 
 	return image
 
@@ -343,7 +318,7 @@ def metadata_tab():
 
 # New Doctor Page
 def doctor_page():
-	global csvdata, llmdata, db
+	global csvdata, llmdata
 	
 	# Initialize session state variables if they don't exist
 	if 'edited_data' not in st.session_state: st.session_state.edited_data = {}
@@ -560,9 +535,15 @@ def doctor_page():
 				new_pred = st.toggle('Generate New Prediction')
 				
 				if new_pred:
-					# Make sure we have all necessary feature columns
 					new_X = final_edited_df[feature_cols + demographic_cols + smoking_hist + llm_sent]
+					score_df = new_X[score_cols]
+					score_df['procedures'] = csvdata.loc[csvdata['Subject'] == int(st.session_state.selected_subject), 'procedures'].values[0]
+					new_score = ScoreLLM.generate_score(score_df)
 					
+					if new_score != -1:
+						new_X['llm_sentiment'] = [new_score]
+						print('Debug - score generated')
+
 					new_results = generate_outcome(
 						subject=st.session_state.selected_subject, 
 						classifier=st.session_state.model_selection, 
@@ -571,29 +552,38 @@ def doctor_page():
 					
 					st.markdown(new_results)
 					st.session_state.current_prediction = new_results
-
 					save_results = st.button('Save New Results', use_container_width=True)
 
 					if save_results:
-						tmp_df = final_edited_df[['Subject'] + demographic_cols + smoking_hist].iloc[0].copy()
-						tmp_df['Result'] = new_results
-						tmp_df['Timestamp'] = datetime.now().isoformat()
+						if not st.session_state.db.check_status():
+							st.session_state.db.retry_connection()
+							if not st.session_state.db.check_status():
+								st.error("Database connection failed. Cannot save results.")
 						
-						# Get image names from uploaded files
-						image_names = []
-						if st.session_state.uploaded_files_list:
-							image_names = [file.name for file in st.session_state.uploaded_files_list]
-						
-						tmp_df['Images'] = image_names
-						df_dict = pd.DataFrame(tmp_df).T.to_dict(orient='records')[0]
-						
-						save_success = db.save(df_dict)
+						try:
+							tmp_df = final_edited_df[['Subject'] + demographic_cols + smoking_hist].iloc[0].copy()
 
-						if save_success:
-							st.toast('Saved diagnostics to database.')
+							tmp_df['Result'] = new_results
+							tmp_df['Timestamp'] = datetime.now().isoformat()
+							
+							# Get image names from uploaded files
+							image_names = []
+							if st.session_state.uploaded_files_list:
+								image_names = [file.name for file in st.session_state.uploaded_files_list]
+							
+							tmp_df['Images'] = image_names
+							df_dict = pd.DataFrame(tmp_df).T.to_dict(orient='records')[0]
+							save_success = st.session_state.db.save(df_dict)
+							
+							if save_success:
+								st.success('Saved diagnostics to database.')
+							else:
+								st.error('Database upload failed!')
+						
+						except Exception as e:
+							st.error(f"Error saving data: {str(e)}")
+							print(f"Save error: {str(e)}")
 
-						else:
-							st.toast('Datbase upload failed!')
 		else:
 			st.info("No edits have been made to patient data. Make changes in the 'Images and Clinical' tab first to generate new predictions.")
 
@@ -601,17 +591,13 @@ def doctor_page():
 
 		with cl1:
 			show_scan_disabled = len(st.session_state.uploaded_files_list) == 0
-			# show_scan = st.toggle(
-			# 	label='Show CT Scan (Upload CT Scans First)' if show_scan_disabled else "Show CT Scan",
-			# 	disabled=show_scan_disabled)
 			
 			show_scan = st.toggle(
 				label='Show Saliency Map (Please Upload CT Scans First)' if show_scan_disabled else "Show Saliency Map",
 				disabled=show_scan_disabled)
 
 			if show_scan and st.session_state.uploaded_files_list:
-				# st.image(st.session_state.uploaded_files_list[0], caption='CT Scan')
-				plot_path = os.path.join('saliency_plots', f'{st.session_state.subject_selection}.png')
+				plot_path = os.path.join('saliency_plots', f'{st.session_state.subject_selection}_reg.png')
 
 				if os.path.exists(plot_path):
 					st.image(image=plot_path, caption=os.path.basename(plot_path).split('.')[0])
@@ -635,24 +621,23 @@ def doctor_page():
 				else:
 					st.warning(f"SHAP plot for subject {tmp_current} not found.")
 
+		if not show_scan_disabled:
+			show_viz = st.toggle('Show Feature Correspondance Maps')
+			if show_viz:
+				viz_path = os.path.join('saliency_plots', f'{st.session_state.subject_selection}_viz.png')
 
-		# st.session_state.dc_notes = st.text_area(label='Doctor\'s Notes', 
-		# 								         value=doc_notes[doc_notes['Subject'] == int(st.session_state.selected_subject)]['comments'].values[0])
+				if os.path.exists(viz_path):
+					st.image(viz_path, use_container_width=True)
 
-		# notes = st.file_uploader(label='Upload New Notes', type=['pdf', 'txt', 'docx'], accept_multiple_files=False)
-		# save = st.button('Save/Update Notes', use_container_width=True)
-
-		# st.session_state.pt_notes = st.text_area(label='Patient\'s Observations',
-		# 									     value=pat_notes[pat_notes['Subject'] == int(st.session_state.selected_subject)]['Remark'].values[0])
-		
-		# save_obs = st.button(label='Save Observations', use_container_width=True)
+				else:
+					st.image(image=os.path.join('images', 'notfound.jpg'), caption='Failed to Load')
 
 
 	with historaical_data:
 		show_history = st.toggle('Load Patient History')
 
 		if show_history:
-			records = db.fetch(subject_id=int(st.session_state.selected_subject))
+			records = st.session_state.db.fetch(subject_id=str(st.session_state.selected_subject))
 
 			if len(records) > 0:
 				for entry in records:
@@ -866,19 +851,24 @@ def patient_page(patient_id:str):
 				st.image(image=os.path.join('shap_plots', f'{patient_id}.png'), caption='SHAP Summary')
 
 			with col2:
-				plot_path = os.path.join('saliency_plots', f'{patient_id}.png')
+				plot_path = os.path.join('saliency_plots', f'{patient_id}_reg.png')
 
 				if os.path.exists(plot_path):
 					st.image(image=plot_path, caption=os.path.basename(plot_path).split('.')[0])
-
 				else:
-					st.image(image=os.path.join('images', 'notfound.jpg'), caption='Failed to Load')
+					st.image(image=os.path.join('images', 'notfound.jpg'), caption='Failed to Load Saliency Map')
+
+			viz_path = os.path.join('saliency_plots', f'{patient_id}_viz.png')
+			if os.path.exists(viz_path):
+				st.image(image=viz_path, caption='Feature Correspondance Map')
+			else:
+				st.image(image=os.path.join('images', 'notfound.jpg'), caption='Failed to Load Correspondance Map')
 
 			st.divider()
 
 		if show_preds:
 			st.subheader('Diagnostic Prediction History')
-			records = db.fetch(subject_id=int(patient_id))
+			records = st.session_state.db.fetch(subject_id=int(patient_id))
 
 			if len(records) > 0:
 				for entry in records:
@@ -999,12 +989,13 @@ if __name__ == "__main__":
 	doc_notes = utilloader('doctor_notes')
 	pat_notes = utilloader('patient_notes')
 	Manager = utilloader('manager')
-	db = utilloader('database')
-
+	ScoreLLM = utilloader('score_gen')
+	
+	st.session_state.db = utilloader('database')
 	st.session_state.subject_list = list(csvdata['Subject'])
 	
-	# st.session_state.login = True
-	# st.session_state.user = 'Doctor'
+	st.session_state.login = True
+	st.session_state.user = 'Doctor'
 	# patient_page('100158')
 	
 	main()

@@ -5,8 +5,7 @@
 
 
 DONE 5. Change timestamps to EST
-HALF DONE 6. Add pixel plot importance map (pending overlay, plots only present for 1A and 1G)
-          6. Plots added for all subjects (average of few scans for each subject), but not overlayed due to low visibility
+DONE 6. Add pixel plot importance map 
 DONE 8. Change welcome name to Tushar Mehta
 DONE 9. Shap plot on Diag, csv data on clinical tab
 DONE 10. Notes go in clinical tab

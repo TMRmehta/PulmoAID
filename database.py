@@ -47,7 +47,7 @@ class DBManager():
 		return self.connected
 
 
-	def fetch(self, subject_id:int):
+	def fetch(self, subject_id:str):
 		if self.connected:
 			records = list(
 					self.collection.find({"Subject": subject_id}, {"_id": 0})
@@ -60,8 +60,14 @@ class DBManager():
 
 	def save(self, data:dict):
 		if self.connected:
-			self.collection.insert_one(data)
-			return True
+			try:
+				result = self.collection.insert_one(data)
+				print(f"Document inserted with ID: {result.inserted_id}")
+				return True
+			
+			except Exception as e:
+				print(f"Database insert error: {str(e)}")
+				return False
 		
 		print('Warning! DB not connected.')
 		return False
@@ -83,7 +89,7 @@ class DBManager():
 
 if __name__ == "__main__":
 	db = DBManager()
-	patient_data = db.fetch(100158)
-	print(patient_data)
+	# patient_data = db.fetch(100158)
+	# print(patient_data)
 
-	# db.purge_all()
+
