@@ -35,6 +35,12 @@ Validation (Field Testing) Dataset -
 2A (Positive Patients) - 312
 2G (Negative Patients) - 184
     """.strip(), language=None)
+st.markdown('# **App Demonstration**')
+st.subheader('Code Repository')
+st.markdown("[GitHub](https://github.com/TMRmehta/PulmoAID)")
+ 
+st.subheader('PulmoAID App')
+st.markdown("[Streamlit.io](https://pulmoaid.streamlit.app/)")
 
 # st.subheader('Model Architecture Summary')
 # st.image(image=os.path.join('images', 'architecture.png'))
