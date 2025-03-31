@@ -34,10 +34,12 @@ class LLM():
 							  generation_config=self.config)
 		
 	def truncate_context(self):
-		new = self.context[0] + self.context[-10:]
+		new = [self.context[0]] + self.context[-10:]
 		self.context = new
 
-	
+	def clear_context(self):
+		self.context = []
+
 	def set_prompt(self, prompt:str):
 		self.sys_prompt = prompt
 		self.model = genai.GenerativeModel(model_name="gemini-1.5-flash", 

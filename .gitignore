@@ -4,7 +4,12 @@ __pycache__/
 # Notebooks
 splitter.ipynb
 tests.ipynb
-*.ipynb
+database.ipynb
+llm_data.ipynb
+testing.ipynb
+
+# notes
+notes.txt
 
 # Other
 app2.py 

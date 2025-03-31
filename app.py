@@ -87,7 +87,6 @@ extraction with traditional classification techniques to enhance diagnostic accu
 	""".strip())
 
 	st.subheader('LLM Integration')
-
 	st.image(os.path.join('images', 'gemini_logo.jpg'))
 	st.write(''' 
 Gemini 1.5 Flash's speed and efficiency allows rapid analysis of patient data. 
@@ -99,6 +98,10 @@ The model was used to induce a synthetic varible (llm_sentiment) to act as a doc
 It was prompted to generate a score between 0-10 based on patient's cancer history to add a third modality to the classifier's prediction.
 This LLM also serves as a context-aware question answering chatbot/virtual doctor to interact with the clinical data.
 		''')	
+	
+	st.subheader('System Architecture')
+	st.image(os.path.join('images', 'system_architecture.jpeg'))
+
 	st.subheader('Multimodal Fusion Model Metrics')
 	st.image(os.path.join('images', 'fusion_metrics.png'))
 
@@ -312,6 +315,22 @@ def metadata_tab():
 ### **Lived/Worked with Smoker**
 - **0** – No  
 - **1** – Yes  
+
+### **Biopsy Type**  
+- **0** – Not related to positive screen 
+- **1** – Related to positive screen
+
+### **Cancer Biopsy**  
+- **0** – No biopsy for lung cancer
+- **1** – Had biopsy for lung cancer
+
+Screened for Cancer
+- **0** – No 
+- **1** – Yes
+
+Cancer Procedure
+- **0** – Did not undergo any peocedure related to lung cancer
+- **1** – Underwent procedure related to lung cancer.
 '''
 	)
 
@@ -375,11 +394,16 @@ def doctor_page():
 			if tmpset:
 				tmp_current = str(tmpset.pop())
 				# Update the selected subject based on uploaded files
-				st.session_state.selected_subject = tmp_current
-				
+
 				# Warn if selected subject doesn't match images
 				if str(tmp_current) != str(st.session_state.subject_selection):
 					st.warning('Warning! Uploaded image ID(s) do not match with selected subject. Please choose correct subject in sidebar. Unmatched images may lead to incorrect prediction.')
+
+				if not str(tmp_current).isnumeric() or len(str(tmp_current)) < 6:
+					st.warning('Warning! Uploaded file named incorrectly. Please rename in {patient_id}_{scan_id} format to ensure correct processing.')
+
+				else:
+					st.session_state.selected_subject = tmp_current
 
 		else:
 			# If no files uploaded, use the sidebar selection
@@ -494,13 +518,19 @@ def doctor_page():
 				try:
 					image = Image.open(file).convert("RGB")
 					st.session_state.pil_images.append(image)
+				
 				except Exception as e:
 					st.error(f"Error processing '{file.name}': {e}")
 				
 			if len(nameset) > 1:
 				st.warning('Input files are of different subjects, please give images for one subject only.')
+				
 			else:
 				current_subject = nameset.pop()
+
+				if not current_subject.strip().isnumeric() or len(current_subject.strip()) < 5:
+					st.warning('Warning! Uploaded file named incorrectly. Please rename in {patient_id}_{scan_id} format to ensure correct processing.')
+
 				st.session_state.selected_subject = current_subject
 
 				with st.spinner(text='Running Model...'):
@@ -516,6 +546,7 @@ def doctor_page():
 		
 		if st.session_state.edited_data:
 			dfs_to_concat = list(st.session_state.edited_data.values())
+			
 			if dfs_to_concat:
 				final_edited_df = pd.concat(dfs_to_concat, axis=1)
 				
@@ -695,6 +726,12 @@ If any question is unrelated to lung cancer or the medical field in general, res
 
 			with st.chat_message("assistant"):
 				st.markdown(response)
+
+		clear_chat = st.button('Clear Conversation', use_container_width=True)
+
+		if clear_chat:
+			st.session_state.messages = []
+			st.session_state.llm.clear_context()
 
 	with metadata:
 		metadata_tab()
@@ -930,13 +967,20 @@ Eg. It is suggested that you ... so on.
 			with st.chat_message("assistant"):
 				st.markdown(response)
 
+		
+		clear_chat = st.button('Clear Conversation', use_container_width=True)
+
+		if clear_chat:
+			st.session_state.messages = []
+			st.session_state.llm.clear_context()
+
 	with metadata:
 		metadata_tab()
 
 def main():
-	
 	if 'login' not in st.session_state: st.session_state.login = False
 	if 'user' not in st.session_state: st.session_state.user = None
+	if 'register' not in st.session_state: st.session_state.register = False
 	
 	if not st.session_state.login:
 		st.image(image=logo_img, use_container_width=True)
@@ -953,11 +997,17 @@ def main():
 		with col2:
 			if st.button("Patient", use_container_width=True):
 				st.session_state.user = "Patient"
+
+		reg_button = st.button("Register As New User", use_container_width=True)
 		
+		if reg_button:
+			st.session_state.register = True
+
 		if username and password and st.session_state.user:
 			if st.session_state.user == "Doctor" and username == st.secrets["keys"]["username"] and password == st.secrets["keys"]["password"]:
 				st.session_state.login = True
 				st.session_state.user = "Doctor"
+				st.session_state.register = False
 				# st.rerun()
 
 			elif st.session_state.user == "Patient" and username.strip().isnumeric():
@@ -966,6 +1016,7 @@ def main():
 				if tmp in st.session_state.subject_list and password == st.secrets["keys"]["password"]:
 					st.session_state.login = True
 					st.session_state.subject = username.strip()
+					st.session_state.register = False
 					# st.rerun()
 
 				else:
@@ -982,6 +1033,10 @@ def main():
 		# st.session_state.scans = load_image(str(st.session_state.subject))
 		patient_page(st.session_state.subject)
 
+	if st.session_state.register:
+		# registration_page()
+		st.info("Please contact mehtat124@gmail.com to create a new user profile.")
+
 
 if __name__ == "__main__":
 	csvdata = utilloader('classifier_csv')
@@ -994,8 +1049,8 @@ if __name__ == "__main__":
 	st.session_state.db = utilloader('database')
 	st.session_state.subject_list = list(csvdata['Subject'])
 	
-	#st.session_state.login = True
-	#st.session_state.user = 'Doctor'
+	# st.session_state.login = True
+	# st.session_state.user = 'Doctor'
 	# patient_page('100158')
 	
 	main()
