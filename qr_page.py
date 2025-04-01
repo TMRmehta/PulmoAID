@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title='PulmoAID Info', layout='wide', initial_sidebar_state='auto', page_icon='ℹ️')
 st.markdown(""" 
 # **PulmoAID**
-*Enabling AI-based diagnostics for lung cancer using advanced multimodal feature fusion approach.*
+*Enabling AI-based diagnostics for lung cancer using an advanced multimodal feature fusion approach.*
 """.strip())
 st.markdown('# **App Demonstration**')
 st.video("https://youtu.be/7Bp_GRH7F_Q")
