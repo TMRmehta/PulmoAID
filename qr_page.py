@@ -2,7 +2,12 @@ import os
 import streamlit as st
 
 st.set_page_config(page_title='PulmoAID Info', layout='wide', initial_sidebar_state='auto', page_icon='ℹ️')
-
+st.markdown(""" 
+# **PulmoAID**
+*Enabling AI-based diagnostics for lung cancer using advanced multimodal feature fusion approach.*
+""".strip())
+st.markdown('# **App Demonstration**')
+st.video("https://youtu.be/7Bp_GRH7F_Q")
 st.title("Advancing Lung Cancer Diagnostics through Multimodal Deep Learning")
 st.subheader("Optimal Fusion of 3D Radiological Imaging and Clinical Data with LLM-Driven Interpretability - Tushar Mehta")
 st.markdown("""
@@ -16,12 +21,6 @@ This research showcases the power of multimodal fusion and LLM-driven interpreta
 * **Validation on Large-Scale Dataset:** The developed model was rigorously trained and evaluated on the extensive National Lung Screening Trial (NLST) dataset, ensuring the robustness and generalizability of the findings.
 * **Enhanced Diagnostic Accuracy and Clinical Trust:** The research demonstrates that this multimodal approach, coupled with LLM-driven interpretability, leads to significant improvements in diagnostic accuracy, ultimately fostering greater clinical trust in the system's recommendations.
 """)
-st.markdown('# **App Demonstration**')
-st.video("https://youtu.be/7Bp_GRH7F_Q")
-st.markdown(""" 
-# **PulmoAID**
-*Enabling AI-based diagnostics for lung cancer using advanced multimodal feature fusion approach.*
-""".strip())
 
 st.subheader('Data Summary Statistics')
 st.code(body=""" 
