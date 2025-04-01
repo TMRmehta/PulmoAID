@@ -36,10 +36,7 @@ Validation (Field Testing) Dataset -
 2G (Negative Patients) - 184
     """.strip(), language=None)
 st.markdown('# **App Demonstration**')
-with open(" ", "rb") as video_file:
-    video_bytes = video_file.read()
-
-st.video(video_bytes)
+st.video("https://drive.google.com/file/d/1Q9HNOPIHxEXnkAo65DAa1b20CnkfXt-D/view?usp=sharing")
 st.subheader('Code Repository')
 st.markdown("[GitHub](https://github.com/TMRmehta/PulmoAID)")
  
