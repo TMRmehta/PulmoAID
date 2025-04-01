@@ -17,7 +17,8 @@ This research showcases the power of multimodal fusion and LLM-driven interpreta
 * **Validation on Large-Scale Dataset:** The developed model was rigorously trained and evaluated on the extensive National Lung Screening Trial (NLST) dataset, ensuring the robustness and generalizability of the findings.
 * **Enhanced Diagnostic Accuracy and Clinical Trust:** The research demonstrates that this multimodal approach, coupled with LLM-driven interpretability, leads to significant improvements in diagnostic accuracy, ultimately fostering greater clinical trust in the system's recommendations.
 """)
-
+st.markdown('# **App Demonstration**')
+st.video("https://youtu.be/7Bp_GRH7F_Q")
 st.markdown(""" 
 # **PulmoAID**
 *Enabling AI-based diagnostics for lung cancer using advanced multimodal feature fusion approach.*
@@ -35,8 +36,7 @@ Validation (Field Testing) Dataset -
 2A (Positive Patients) - 312
 2G (Negative Patients) - 184
     """.strip(), language=None)
-st.markdown('# **App Demonstration**')
-st.video("https://youtu.be/7Bp_GRH7F_Q")
+
 st.subheader('Code Repository')
 st.markdown("[GitHub](https://github.com/TMRmehta/PulmoAID)")
  
