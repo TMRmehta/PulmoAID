@@ -3,7 +3,7 @@ import streamlit as st
 
 st.set_page_config(page_title='PulmoAID Info', layout='wide', initial_sidebar_state='auto', page_icon='ℹ️')
 st.markdown(""" 
-# **: PulmoAID - Tushar Mehta**
+# **PulmoAID - Tushar Mehta**
 *Enabling AI-based diagnostics for lung cancer using an advanced multimodal feature fusion approach.*
 """.strip())
 st.markdown('# **App Demonstration**')
