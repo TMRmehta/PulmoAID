@@ -29,7 +29,7 @@ class LLM():
 			"response_mime_type": "text/plain",
 		}
 		
-		self.model = genai.GenerativeModel(model_name="gemini-1.5-flash", 
+		self.model = genai.GenerativeModel(model_name="gemini-flash-lite-latest", 
 							  system_instruction=self.sys_prompt, 
 							  generation_config=self.config)
 		
@@ -42,7 +42,7 @@ class LLM():
 
 	def set_prompt(self, prompt:str):
 		self.sys_prompt = prompt
-		self.model = genai.GenerativeModel(model_name="gemini-1.5-flash", 
+		self.model = genai.GenerativeModel(model_name="gemini-flash-lite-latest", 
 							  system_instruction=self.sys_prompt, 
 							  generation_config=self.config)
 
